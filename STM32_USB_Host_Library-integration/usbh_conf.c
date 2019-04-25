@@ -89,9 +89,6 @@ void HAL_HCD_MspInit(HCD_HandleTypeDef *hhcd)
     /* Enable USB FS Clocks */ 
     __HAL_RCC_USB_OTG_FS_CLK_ENABLE();
 
-    /* Set USBFS Interrupt priority */
-    HAL_NVIC_SetPriority(OTG_FS_IRQn, 6, 0);
-
     /* Enable USBFS Interrupt */
     HAL_NVIC_EnableIRQ(OTG_FS_IRQn);
   }
@@ -152,9 +149,6 @@ void HAL_HCD_MspInit(HCD_HandleTypeDef *hhcd)
 
     /* Enable USB HS Clocks */
     __HAL_RCC_USB_OTG_HS_CLK_ENABLE();
-
-    /* Set USBHS Interrupt priority */
-    HAL_NVIC_SetPriority(OTG_HS_IRQn, 6, 0);
 
     /* Enable USBHS Interrupt */
     HAL_NVIC_EnableIRQ(OTG_HS_IRQn);
