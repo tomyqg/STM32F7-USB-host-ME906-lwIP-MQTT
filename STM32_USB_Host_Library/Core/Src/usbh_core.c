@@ -427,6 +427,14 @@ USBH_StatusTypeDef USBH_ReEnumerate(USBH_HandleTypeDef *phost)
   */
 USBH_StatusTypeDef  USBH_Process(USBH_HandleTypeDef *phost)
 {
+#if USE_USB_FS
+  NVIC_DisableIRQ(OTG_FS_IRQn);
+#elif USE_USB_HS
+  NVIC_DisableIRQ(OTG_HS_IRQn);
+#else
+#error "No USB selected"
+#endif
+
   __IO USBH_StatusTypeDef status = USBH_FAIL;
   uint8_t idx = 0U;
 
@@ -698,6 +706,15 @@ USBH_StatusTypeDef  USBH_Process(USBH_HandleTypeDef *phost)
   default :
     break;
   }
+
+#if USE_USB_FS
+  NVIC_EnableIRQ(OTG_FS_IRQn);
+#elif USE_USB_HS
+  NVIC_EnableIRQ(OTG_HS_IRQn);
+#else
+#error "No USB selected"
+#endif
+
  return USBH_OK;
 }
 
