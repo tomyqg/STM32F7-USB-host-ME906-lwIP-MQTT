@@ -21,6 +21,8 @@
 #ifndef __STM32F7xx_HAL_CONF_H
 #define __STM32F7xx_HAL_CONF_H
 
+#include "distortos/chip/CMSIS-proxy.h"
+
 #ifdef __cplusplus
  extern "C" {
 #endif
