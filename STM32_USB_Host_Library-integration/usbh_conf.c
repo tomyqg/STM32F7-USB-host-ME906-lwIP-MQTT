@@ -49,6 +49,12 @@
 
 HCD_HandleTypeDef hhcd;
 
+#if USBH_USE_OS == 1
+
+static uint8_t pipeStates[USBH_MAX_PIPES_NBR];
+
+#endif  // USBH_USE_OS == 1
+
 /*******************************************************************************
                        HCD BSP Routines
 *******************************************************************************/
@@ -240,7 +246,15 @@ void HAL_HCD_PortDisabled_Callback(HCD_HandleTypeDef *hhcd)
   */
 void HAL_HCD_HC_NotifyURBChange_Callback(HCD_HandleTypeDef *hhcd, uint8_t chnum, HCD_URBStateTypeDef urb_state)
 {
-  /* To be used with OS to sync URB state with the global state machine */
+#if USBH_USE_OS == 1
+
+  if (pipeStates[chnum] == urb_state)
+    return;
+
+  pipeStates[chnum] = urb_state;
+  USBH_LL_NotifyURBChange(hhcd->pData);
+
+#endif  // USBH_USE_OS == 1
 }
 
 /*******************************************************************************
@@ -462,6 +476,11 @@ USBH_StatusTypeDef USBH_LL_SubmitURB(USBH_HandleTypeDef *phost,
                                      uint16_t length,
                                      uint8_t do_ping)
 {
+#if USBH_USE_OS == 1
+
+  pipeStates[pipe] = URB_IDLE;
+
+#endif  // USBH_USE_OS == 1
   HAL_HCD_HC_SubmitRequest(phost->pData,
                            pipe,
                            direction,
