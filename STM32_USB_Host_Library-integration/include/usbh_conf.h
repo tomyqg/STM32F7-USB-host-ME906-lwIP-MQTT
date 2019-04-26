@@ -53,6 +53,11 @@
 #include <stdlib.h>
 #include <string.h>
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif /* def __cplusplus */
+
 /* Exported types ------------------------------------------------------------*/
 #define USBH_MAX_NUM_ENDPOINTS                3
 #define USBH_MAX_NUM_INTERFACES               6
@@ -105,6 +110,10 @@
 #endif
 
 /* Exported functions ------------------------------------------------------- */
+
+#ifdef __cplusplus
+} /* extern "C" */
+#endif /* def __cplusplus */
 
 #endif /* __USBH_CONF_H */
 
