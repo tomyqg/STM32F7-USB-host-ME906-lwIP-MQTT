@@ -85,8 +85,20 @@ extern "C"
     
 /* DEBUG macros */   
 #if (USBH_DEBUG_LEVEL > 0)
-#define USBH_UsrLog(...)   printf(__VA_ARGS__);\
-                           printf("\n");
+
+/**
+ * \brief iprintf()-like function which uses \a standardOutputStream and can be used from interrupts.
+ *
+ * \warning The implementation which allows this function to be used from interrupts is a bit hacky, so such use should
+ * generally be limited. In case of high-frequency use, some messages sent from interrupt may get lost or become
+ * corrupted.
+ *
+ * \param [in] format is a format string
+ */
+
+void usbHostLog(const char* format, ...) __attribute__ ((format(printf, 1, 2)));
+
+#define USBH_UsrLog(format, ...)  usbHostLog(format "\r\n", ## __VA_ARGS__);
 #else
 #define USBH_UsrLog(...)   
 #endif 
@@ -94,17 +106,13 @@ extern "C"
                             
 #if (USBH_DEBUG_LEVEL > 1)
 
-#define USBH_ErrLog(...)   printf("ERROR: ") ;\
-                           printf(__VA_ARGS__);\
-                           printf("\n");
+#define USBH_ErrLog(format, ...)  usbHostLog("ERROR: " format "\r\n", ## __VA_ARGS__);
 #else
 #define USBH_ErrLog(...)   
 #endif 
                                                       
 #if (USBH_DEBUG_LEVEL > 2)                         
-#define USBH_DbgLog(...)   printf("DEBUG : ") ;\
-                           printf(__VA_ARGS__);\
-                           printf("\n");
+#define USBH_DbgLog(format, ...)  usbHostLog("DEBUG : " format "\r\n", ## __VA_ARGS__);
 #else
 #define USBH_DbgLog(...)                         
 #endif
