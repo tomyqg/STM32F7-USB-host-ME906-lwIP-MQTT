@@ -65,7 +65,7 @@ extern "C"
 #define USBH_KEEP_CFG_DESCRIPTOR              0
 #define USBH_MAX_SIZE_CONFIGURATION           0x200
 #define USBH_MAX_DATA_BUFFER                  0x200
-#define USBH_DEBUG_LEVEL                      2
+#define USBH_DEBUG_LEVEL                      3
 #define USBH_USE_OS                           1
 
 /* Exported constants --------------------------------------------------------*/
