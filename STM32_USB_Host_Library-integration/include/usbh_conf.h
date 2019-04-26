@@ -55,6 +55,8 @@ extern "C"
 {
 #endif /* def __cplusplus */
 
+#define USE_USB_FS                            1
+
 /* Exported types ------------------------------------------------------------*/
 #define USBH_MAX_NUM_ENDPOINTS                3
 #define USBH_MAX_NUM_INTERFACES               6
