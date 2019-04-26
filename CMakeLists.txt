@@ -31,14 +31,22 @@ include(${CMAKE_CURRENT_LIST_DIR}/CMSIS-RTOS2/CMSIS-RTOS2-sources.cmake)
 include(${CMAKE_CURRENT_LIST_DIR}/CMSIS-RTOS2-integration/CMSIS-RTOS2-sources.cmake)
 
 #-----------------------------------------------------------------------------------------------------------------------
+# STM32_USB_Host_Library library
+#-----------------------------------------------------------------------------------------------------------------------
+
+include(${CMAKE_CURRENT_LIST_DIR}/STM32_USB_Host_Library/STM32_USB_Host_Library-sources.cmake)
+include(${CMAKE_CURRENT_LIST_DIR}/STM32_USB_Host_Library-integration/STM32_USB_Host_Library-sources.cmake)
+target_include_directories(STM32_USB_Host_Library-integration PUBLIC
+		${CMAKE_CURRENT_LIST_DIR}/board/include)
+
+#-----------------------------------------------------------------------------------------------------------------------
 # STM32F7-USB-host-ME906-lwIP-MQTT application
 #-----------------------------------------------------------------------------------------------------------------------
 
 add_executable(STM32F7-USB-host-ME906-lwIP-MQTT
 		main.cpp)
 target_link_libraries(STM32F7-USB-host-ME906-lwIP-MQTT PRIVATE
-		CMSIS-RTOS2
-		STM32F7xx_HAL_Driver)
+		STM32_USB_Host_Library)
 distortosTargetLinkerScripts(STM32F7-USB-host-ME906-lwIP-MQTT $ENV{DISTORTOS_LINKER_SCRIPT})
 
 include(${CMAKE_CURRENT_LIST_DIR}/board/STM32F7-USB-host-ME906-lwIP-MQTT-sources.cmake)
