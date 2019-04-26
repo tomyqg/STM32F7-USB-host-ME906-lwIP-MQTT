@@ -17,13 +17,20 @@ project(STM32F7-USB-host-ME906-lwIP-MQTT)
 add_subdirectory(distortos)
 
 #-----------------------------------------------------------------------------------------------------------------------
+# STM32F7xx_HAL_Driver library
+#-----------------------------------------------------------------------------------------------------------------------
+
+include(${CMAKE_CURRENT_LIST_DIR}/STM32F7xx_HAL_Driver/STM32F7xx_HAL_Driver-sources.cmake)
+include(${CMAKE_CURRENT_LIST_DIR}/STM32F7xx_HAL_Driver-integration/STM32F7xx_HAL_Driver-sources.cmake)
+
+#-----------------------------------------------------------------------------------------------------------------------
 # STM32F7-USB-host-ME906-lwIP-MQTT application
 #-----------------------------------------------------------------------------------------------------------------------
 
 add_executable(STM32F7-USB-host-ME906-lwIP-MQTT
 		main.cpp)
 target_link_libraries(STM32F7-USB-host-ME906-lwIP-MQTT PRIVATE
-		distortos::distortos)
+		STM32F7xx_HAL_Driver)
 distortosTargetLinkerScripts(STM32F7-USB-host-ME906-lwIP-MQTT $ENV{DISTORTOS_LINKER_SCRIPT})
 
 include(${CMAKE_CURRENT_LIST_DIR}/board/STM32F7-USB-host-ME906-lwIP-MQTT-sources.cmake)
