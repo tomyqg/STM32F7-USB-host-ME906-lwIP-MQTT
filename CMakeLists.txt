@@ -26,6 +26,8 @@ target_link_libraries(STM32F7-USB-host-ME906-lwIP-MQTT PRIVATE
 		distortos::distortos)
 distortosTargetLinkerScripts(STM32F7-USB-host-ME906-lwIP-MQTT $ENV{DISTORTOS_LINKER_SCRIPT})
 
+include(${CMAKE_CURRENT_LIST_DIR}/board/STM32F7-USB-host-ME906-lwIP-MQTT-sources.cmake)
+
 distortosBin(STM32F7-USB-host-ME906-lwIP-MQTT STM32F7-USB-host-ME906-lwIP-MQTT.bin)
 distortosDmp(STM32F7-USB-host-ME906-lwIP-MQTT STM32F7-USB-host-ME906-lwIP-MQTT.dmp)
 distortosHex(STM32F7-USB-host-ME906-lwIP-MQTT STM32F7-USB-host-ME906-lwIP-MQTT.hex)
