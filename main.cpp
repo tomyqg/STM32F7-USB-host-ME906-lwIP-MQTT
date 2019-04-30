@@ -9,6 +9,8 @@
  * distributed with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
+#define _GNU_SOURCE
+
 #include "HuaweiMe906.hpp"
 
 #include "stm32f7xx_hal.h"
@@ -18,13 +20,132 @@
 #include "distortos/board/initializeStreams.hpp"
 #include "distortos/board/standardOutputStream.h"
 
-#include "distortos/assert.h"
+#include "distortos/DynamicThread.hpp"
 #include "distortos/ThisThread.hpp"
 
 #include <cinttypes>
+#include <cstring>
 
 namespace
 {
+
+/*---------------------------------------------------------------------------------------------------------------------+
+| local functions
++---------------------------------------------------------------------------------------------------------------------*/
+
+/**
+ * \brief Wrapper for HuaweiMe906::read() which can be used with fopencookie()
+ *
+ * \param [in] cookie is a cookie which was passed to fopencookie(), must be HuaweiMe906 ORed with HuaweiMe906::Port!
+ * \param [out] buffer is the buffer to which the data will be written
+ * \param [in] size is the size of \a buffer, bytes
+ *
+ * \return number of read bytes on success, -1 otherwise
+ */
+
+ssize_t huaweiMe906Read(void* const cookie, char* const buffer, const size_t size)
+{
+	auto& huaweiMe906 = *reinterpret_cast<HuaweiMe906*>(reinterpret_cast<uintptr_t>(cookie) & ~0b11);
+	const auto port = static_cast<HuaweiMe906::Port>(reinterpret_cast<uintptr_t>(cookie) & 0b11);
+	const auto [ret, bytesRead] = huaweiMe906.read(port, buffer, size);
+	if (ret != 0)
+	{
+		errno = ret;
+		return -1;
+	}
+
+	return bytesRead;
+}
+
+/**
+ * \brief Wrapper for HuaweiMe906::write() which can be used with fopencookie()
+ *
+ * \param [in] cookie is a cookie which was passed to fopencookie(), must be HuaweiMe906 ORed with HuaweiMe906::Port!
+ * \param [in] buffer is the buffer with data that will be transmitted
+ * \param [in] size is the size of \a buffer, bytes
+ *
+ * \return number of written bytes on success, -1 otherwise
+ */
+
+ssize_t huaweiMe906Write(void* const cookie, const char* const buffer, const size_t size)
+{
+	auto& huaweiMe906 = *reinterpret_cast<HuaweiMe906*>(reinterpret_cast<uintptr_t>(cookie) & ~0b11);
+	const auto port = static_cast<HuaweiMe906::Port>(reinterpret_cast<uintptr_t>(cookie) & 0b11);
+	const auto ret = huaweiMe906.write(port, buffer, size);
+	if (ret != 0)
+	{
+		errno = ret;
+		return -1;
+	}
+
+	return size;
+}
+
+/**
+ * \brief Wraps selected HuaweiMe906 serial port into a FILE and sets line buffering.
+ *
+ * \param [in] huaweiMe906 is a reference to HuaweiMe906 object
+ * \param [in] port selects the serial port that will be accessed
+ * \param [in] mode is the mode with which the stream is opened
+ *
+ * \return pointer to opened FILE object
+ */
+
+FILE* openHuaweiMe906(HuaweiMe906& huaweiMe906, const HuaweiMe906::Port port, const char* const mode)
+{
+	assert((reinterpret_cast<uintptr_t>(&huaweiMe906) & 0b11) == 0);
+	assert((static_cast<uintptr_t>(port) & ~0b11) == 0);
+
+	const auto cookie =
+			reinterpret_cast<void*>(reinterpret_cast<uintptr_t>(&huaweiMe906) | static_cast<uintptr_t>(port));
+	const auto stream = fopencookie(cookie, mode, {huaweiMe906Read, huaweiMe906Write, {}, {}});
+	assert(stream != nullptr);
+
+	{
+		const auto ret = setvbuf(stream, nullptr, _IOLBF, 256);
+		assert(ret == 0);
+	}
+
+	return stream;
+}
+
+/**
+ * \brief Thread which constantly reads selected HuaweiMe906 serial port and prints data that was read on
+ * \a standardOutputStream.
+ *
+ * \param [in] huaweiMe906 is a reference to HuaweiMe906 object
+ * \param [in] port selects the serial port that will be accessed
+ */
+
+void readerThread(HuaweiMe906& huaweiMe906, const HuaweiMe906::Port port)
+{
+	const auto stream = openHuaweiMe906(huaweiMe906, port, "r");
+	const auto portString = port == HuaweiMe906::Port::pcui ? "PCUI" :
+			port == HuaweiMe906::Port::networkCard ? "Network card" : "GPS";
+
+	while (1)
+	{
+		char buffer[128];
+		if (fgets(buffer, sizeof(buffer), stream) != nullptr)
+		{
+			auto length = strlen(buffer);
+			// trim trailing whitespace
+			while (length > 0 && (buffer[length - 1] == '\r' || buffer[length - 1] == '\n'))
+			{
+				buffer[length - 1] = '\0';
+				--length;
+			}
+			if (length > 0)
+				fiprintf(standardOutputStream, "%s port, read %zu bytes: \"%s\"\r\n", portString, length, buffer);
+		}
+		else
+		{
+			fiprintf(standardOutputStream, "%s port, read failed, errno = %d\r\n", portString, errno);
+			clearerr(stream);
+			distortos::ThisThread::sleepFor(std::chrono::seconds{5});
+		}
+	}
+}
 
 /**
  * \brief User callback for USB host events.
@@ -67,6 +188,37 @@ void usbHostEventCallback(USBH_HandleTypeDef*, const uint8_t event)
 	}
 }
 
+/**
+ * \brief Thread which periodically writes an AT command to selected HuaweiMe906 serial port.
+ *
+ * \param [in] huaweiMe906 is a reference to HuaweiMe906 object
+ * \param [in] port selects the serial port that will be accessed
+ * \param [in] command is the AT command that will be written
+ */
+
+void writerThread(HuaweiMe906& huaweiMe906, const HuaweiMe906::Port port, const char* const command)
+{
+	const auto stream = openHuaweiMe906(huaweiMe906, port, "w");
+	const auto portString = port == HuaweiMe906::Port::pcui ? "PCUI" :
+			port == HuaweiMe906::Port::networkCard ? "Network card" : "GPS";
+
+	while (1)
+	{
+		const auto ret = fiprintf(stream, "%s\r\n", command);
+		if (ret > 0)
+		{
+			fiprintf(standardOutputStream, "%s port, wrote %d bytes\r\n", portString, ret);
+			distortos::ThisThread::sleepFor(std::chrono::seconds{2});
+		}
+		else
+		{
+			fiprintf(standardOutputStream, "%s port, write failed, errno = %d\r\n", portString, errno);
+			clearerr(stream);
+			distortos::ThisThread::sleepFor(std::chrono::seconds{5});
+		}
+	}
+}
+
 }	// namespace
 
 /*---------------------------------------------------------------------------------------------------------------------+
@@ -97,6 +249,20 @@ int main()
 		const auto ret = USBH_Start(&usbHost);
 		assert(ret == USBH_OK);
 	}
+
+	const auto pcuiReaderThread = distortos::makeAndStartDynamicThread({2048, 1},
+			readerThread, std::ref(huaweiMe906), HuaweiMe906::Port::pcui);
+	const auto networkCardReaderThread = distortos::makeAndStartDynamicThread({2048, 1},
+			readerThread, std::ref(huaweiMe906), HuaweiMe906::Port::networkCard);
+	const auto gpsReaderThread = distortos::makeAndStartDynamicThread({2048, 1},
+			readerThread, std::ref(huaweiMe906), HuaweiMe906::Port::gps);
+
+	const auto pcuiWriterThread = distortos::makeAndStartDynamicThread({2048, 1},
+			writerThread, std::ref(huaweiMe906), HuaweiMe906::Port::pcui, "ATI");
+	const auto networkCardWriterThread = distortos::makeAndStartDynamicThread({2048, 1},
+			writerThread, std::ref(huaweiMe906), HuaweiMe906::Port::networkCard, "AT+COPS?");
+	const auto gpsWriterThread = distortos::makeAndStartDynamicThread({2048, 1},
+			writerThread, std::ref(huaweiMe906), HuaweiMe906::Port::gps, "AT+CGDCONT?");
 
 	while (1)
 	{
