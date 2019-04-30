@@ -7,7 +7,7 @@
 # distributed with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #
 
-cmake_minimum_required(VERSION 3.7)
+cmake_minimum_required(VERSION 3.8)
 project(STM32F7-USB-host-ME906-lwIP-MQTT)
 
 #-----------------------------------------------------------------------------------------------------------------------
@@ -46,6 +46,8 @@ target_include_directories(STM32_USB_Host_Library-integration PUBLIC
 add_executable(STM32F7-USB-host-ME906-lwIP-MQTT
 		HuaweiMe906.cpp
 		main.cpp)
+target_compile_features(STM32F7-USB-host-ME906-lwIP-MQTT PRIVATE
+		cxx_std_17)
 target_link_libraries(STM32F7-USB-host-ME906-lwIP-MQTT PRIVATE
 		STM32_USB_Host_Library)
 distortosTargetLinkerScripts(STM32F7-USB-host-ME906-lwIP-MQTT $ENV{DISTORTOS_LINKER_SCRIPT})
