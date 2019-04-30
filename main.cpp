@@ -9,6 +9,8 @@
  * distributed with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
+#include "HuaweiMe906.hpp"
+
 #include "stm32f7xx_hal.h"
 
 #include "usbh_core.h"
@@ -89,6 +91,8 @@ int main()
 		assert(ret == USBH_OK);
 
 	}
+	HuaweiMe906 huaweiMe906 {};
+	huaweiMe906.registerClass(usbHost);
 	{
 		const auto ret = USBH_Start(&usbHost);
 		assert(ret == USBH_OK);
