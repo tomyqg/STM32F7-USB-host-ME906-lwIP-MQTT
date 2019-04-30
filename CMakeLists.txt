@@ -44,6 +44,7 @@ target_include_directories(STM32_USB_Host_Library-integration PUBLIC
 #-----------------------------------------------------------------------------------------------------------------------
 
 add_executable(STM32F7-USB-host-ME906-lwIP-MQTT
+		HuaweiMe906.cpp
 		main.cpp)
 target_link_libraries(STM32F7-USB-host-ME906-lwIP-MQTT PRIVATE
 		STM32_USB_Host_Library)
