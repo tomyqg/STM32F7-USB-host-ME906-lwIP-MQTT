@@ -156,7 +156,7 @@ void readerThread(HuaweiMe906& huaweiMe906, const HuaweiMe906::Port port)
 
 void usbHostEventCallback(USBH_HandleTypeDef*, const uint8_t event)
 {
-	switch(event)
+	switch (event)
 	{
 		case HOST_USER_SELECT_CONFIGURATION:
 			USBH_UsrLog("usbHostEventCallback: HOST_USER_SELECT_CONFIGURATION");
