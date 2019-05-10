@@ -15,6 +15,8 @@ project(STM32F7-USB-host-ME906-lwIP-MQTT)
 #-----------------------------------------------------------------------------------------------------------------------
 
 add_subdirectory(distortos)
+target_include_directories(distortos INTERFACE
+		${CMAKE_CURRENT_LIST_DIR}/board/include)
 
 #-----------------------------------------------------------------------------------------------------------------------
 # STM32F7xx_HAL_Driver library
@@ -36,8 +38,6 @@ include(${CMAKE_CURRENT_LIST_DIR}/CMSIS-RTOS2-integration/CMSIS-RTOS2-sources.cm
 
 include(${CMAKE_CURRENT_LIST_DIR}/STM32_USB_Host_Library/STM32_USB_Host_Library-sources.cmake)
 include(${CMAKE_CURRENT_LIST_DIR}/STM32_USB_Host_Library-integration/STM32_USB_Host_Library-sources.cmake)
-target_include_directories(STM32_USB_Host_Library-integration PUBLIC
-		${CMAKE_CURRENT_LIST_DIR}/board/include)
 
 #-----------------------------------------------------------------------------------------------------------------------
 # STM32F7-USB-host-ME906-lwIP-MQTT application
