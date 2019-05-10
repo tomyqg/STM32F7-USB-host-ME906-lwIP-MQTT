@@ -18,12 +18,12 @@
 #include "usbh_core.h"
 
 #include "distortos/board/initializeStreams.hpp"
-#include "distortos/board/standardOutputStream.h"
 
 #include "distortos/DynamicThread.hpp"
 #include "distortos/ThisThread.hpp"
 
-#include <cinttypes>
+#include "lwip/tcpip.h"
+
 #include <cstring>
 
 namespace
@@ -263,6 +263,8 @@ int main()
 			writerThread, std::ref(huaweiMe906), HuaweiMe906::Port::networkCard, "AT+COPS?");
 	const auto gpsWriterThread = distortos::makeAndStartDynamicThread({2048, 1},
 			writerThread, std::ref(huaweiMe906), HuaweiMe906::Port::gps, "AT+CGDCONT?");
+
+	tcpip_init({}, {});
 
 	while (1)
 	{
