@@ -188,37 +188,6 @@ void usbHostEventCallback(USBH_HandleTypeDef*, const uint8_t event)
 	}
 }
 
-/**
- * \brief Thread which periodically writes an AT command to selected HuaweiMe906 serial port.
- *
- * \param [in] huaweiMe906 is a reference to HuaweiMe906 object
- * \param [in] port selects the serial port that will be accessed
- * \param [in] command is the AT command that will be written
- */
-
-void writerThread(HuaweiMe906& huaweiMe906, const HuaweiMe906::Port port, const char* const command)
-{
-	const auto stream = openHuaweiMe906(huaweiMe906, port, "w");
-	const auto portString = port == HuaweiMe906::Port::pcui ? "PCUI" :
-			port == HuaweiMe906::Port::networkCard ? "Network card" : "GPS";
-
-	while (1)
-	{
-		const auto ret = fiprintf(stream, "%s\r\n", command);
-		if (ret > 0)
-		{
-			fiprintf(standardOutputStream, "%s port, wrote %d bytes\r\n", portString, ret);
-			distortos::ThisThread::sleepFor(std::chrono::seconds{2});
-		}
-		else
-		{
-			fiprintf(standardOutputStream, "%s port, write failed, errno = %d\r\n", portString, errno);
-			clearerr(stream);
-			distortos::ThisThread::sleepFor(std::chrono::seconds{5});
-		}
-	}
-}
-
 }	// namespace
 
 /*---------------------------------------------------------------------------------------------------------------------+
@@ -256,13 +225,6 @@ int main()
 			readerThread, std::ref(huaweiMe906), HuaweiMe906::Port::networkCard);
 	const auto gpsReaderThread = distortos::makeAndStartDynamicThread({2048, 1},
 			readerThread, std::ref(huaweiMe906), HuaweiMe906::Port::gps);
-
-	const auto pcuiWriterThread = distortos::makeAndStartDynamicThread({2048, 1},
-			writerThread, std::ref(huaweiMe906), HuaweiMe906::Port::pcui, "ATI");
-	const auto networkCardWriterThread = distortos::makeAndStartDynamicThread({2048, 1},
-			writerThread, std::ref(huaweiMe906), HuaweiMe906::Port::networkCard, "AT+COPS?");
-	const auto gpsWriterThread = distortos::makeAndStartDynamicThread({2048, 1},
-			writerThread, std::ref(huaweiMe906), HuaweiMe906::Port::gps, "AT+CGDCONT?");
 
 	tcpip_init({}, {});
 
