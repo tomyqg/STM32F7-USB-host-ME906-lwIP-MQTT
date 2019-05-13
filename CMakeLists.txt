@@ -54,7 +54,8 @@ include(${CMAKE_CURRENT_LIST_DIR}/lwIP-integration/lwIP-sources.cmake)
 
 add_executable(STM32F7-USB-host-ME906-lwIP-MQTT
 		HuaweiMe906.cpp
-		main.cpp)
+		main.cpp
+		openHuaweiMe906.cpp)
 target_compile_features(STM32F7-USB-host-ME906-lwIP-MQTT PRIVATE
 		cxx_std_17)
 target_link_libraries(STM32F7-USB-host-ME906-lwIP-MQTT PRIVATE

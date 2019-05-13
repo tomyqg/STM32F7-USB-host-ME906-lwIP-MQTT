@@ -12,6 +12,7 @@
 #define _GNU_SOURCE
 
 #include "HuaweiMe906.hpp"
+#include "openHuaweiMe906.hpp"
 
 #include "stm32f7xx_hal.h"
 
@@ -32,82 +33,6 @@ namespace
 /*---------------------------------------------------------------------------------------------------------------------+
 | local functions
 +---------------------------------------------------------------------------------------------------------------------*/
-
-/**
- * \brief Wrapper for HuaweiMe906::read() which can be used with fopencookie()
- *
- * \param [in] cookie is a cookie which was passed to fopencookie(), must be HuaweiMe906 ORed with HuaweiMe906::Port!
- * \param [out] buffer is the buffer to which the data will be written
- * \param [in] size is the size of \a buffer, bytes
- *
- * \return number of read bytes on success, -1 otherwise
- */
-
-ssize_t huaweiMe906Read(void* const cookie, char* const buffer, const size_t size)
-{
-	auto& huaweiMe906 = *reinterpret_cast<HuaweiMe906*>(reinterpret_cast<uintptr_t>(cookie) & ~0b11);
-	const auto port = static_cast<HuaweiMe906::Port>(reinterpret_cast<uintptr_t>(cookie) & 0b11);
-	const auto [ret, bytesRead] = huaweiMe906.read(port, buffer, size);
-	if (ret != 0)
-	{
-		errno = ret;
-		return -1;
-	}
-
-	return bytesRead;
-}
-
-/**
- * \brief Wrapper for HuaweiMe906::write() which can be used with fopencookie()
- *
- * \param [in] cookie is a cookie which was passed to fopencookie(), must be HuaweiMe906 ORed with HuaweiMe906::Port!
- * \param [in] buffer is the buffer with data that will be transmitted
- * \param [in] size is the size of \a buffer, bytes
- *
- * \return number of written bytes on success, -1 otherwise
- */
-
-ssize_t huaweiMe906Write(void* const cookie, const char* const buffer, const size_t size)
-{
-	auto& huaweiMe906 = *reinterpret_cast<HuaweiMe906*>(reinterpret_cast<uintptr_t>(cookie) & ~0b11);
-	const auto port = static_cast<HuaweiMe906::Port>(reinterpret_cast<uintptr_t>(cookie) & 0b11);
-	const auto ret = huaweiMe906.write(port, buffer, size);
-	if (ret != 0)
-	{
-		errno = ret;
-		return -1;
-	}
-
-	return size;
-}
-
-/**
- * \brief Wraps selected HuaweiMe906 serial port into a FILE and sets line buffering.
- *
- * \param [in] huaweiMe906 is a reference to HuaweiMe906 object
- * \param [in] port selects the serial port that will be accessed
- * \param [in] mode is the mode with which the stream is opened
- *
- * \return pointer to opened FILE object
- */
-
-FILE* openHuaweiMe906(HuaweiMe906& huaweiMe906, const HuaweiMe906::Port port, const char* const mode)
-{
-	assert((reinterpret_cast<uintptr_t>(&huaweiMe906) & 0b11) == 0);
-	assert((static_cast<uintptr_t>(port) & ~0b11) == 0);
-
-	const auto cookie =
-			reinterpret_cast<void*>(reinterpret_cast<uintptr_t>(&huaweiMe906) | static_cast<uintptr_t>(port));
-	const auto stream = fopencookie(cookie, mode, {huaweiMe906Read, huaweiMe906Write, {}, {}});
-	assert(stream != nullptr);
-
-	{
-		const auto ret = setvbuf(stream, nullptr, _IOLBF, 256);
-		assert(ret == 0);
-	}
-
-	return stream;
-}
 
 /**
  * \brief Thread which constantly reads selected HuaweiMe906 serial port and prints data that was read on
