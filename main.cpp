@@ -146,8 +146,6 @@ int main()
 
 	const auto pcuiReaderThread = distortos::makeAndStartDynamicThread({2048, 1},
 			readerThread, std::ref(huaweiMe906), HuaweiMe906::Port::pcui);
-	const auto networkCardReaderThread = distortos::makeAndStartDynamicThread({2048, 1},
-			readerThread, std::ref(huaweiMe906), HuaweiMe906::Port::networkCard);
 	const auto gpsReaderThread = distortos::makeAndStartDynamicThread({2048, 1},
 			readerThread, std::ref(huaweiMe906), HuaweiMe906::Port::gps);
 
