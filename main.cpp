@@ -13,6 +13,7 @@
 
 #include "HuaweiMe906.hpp"
 #include "openHuaweiMe906.hpp"
+#include "PpposManager.hpp"
 
 #include "stm32f7xx_hal.h"
 
@@ -150,6 +151,9 @@ int main()
 			readerThread, std::ref(huaweiMe906), HuaweiMe906::Port::gps);
 
 	tcpip_init({}, {});
+
+	PpposManager ppposManager {huaweiMe906};
+	ppposManager.initialize();
 
 	while (1)
 	{
