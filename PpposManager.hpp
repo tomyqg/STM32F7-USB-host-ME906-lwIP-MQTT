@@ -12,7 +12,6 @@
 #ifndef PPPOSMANAGER_HPP_
 #define PPPOSMANAGER_HPP_
 
-#include "distortos/ConditionVariable.hpp"
 #include "distortos/Mutex.hpp"
 
 #include "estd/ContiguousRange.hpp"
@@ -20,6 +19,13 @@
 #include "netif/ppp/ppp.h"
 
 class HuaweiMe906;
+
+namespace distortos
+{
+
+class Semaphore;
+
+}	// namespace distortos
 
 /// PpposManager class is a manager of lwIP's PPPoS interface
 class PpposManager
@@ -33,11 +39,11 @@ public:
 	 */
 
 	constexpr explicit PpposManager(HuaweiMe906& huaweiMe906) :
-			conditionVariable_{},
 			mutex_{distortos::Mutex::Protocol::priorityInheritance},
 			netif_{},
 			huaweiMe906_{huaweiMe906},
 			pcb_{},
+			semaphore_{},
 			connected_{}
 	{
 
@@ -133,10 +139,7 @@ private:
 
 	static u32_t ppposOutput(ppp_pcb* pcb, u8_t* buffer, u32_t size, void* context);
 
-	/// condition variable used for notifications about changes to connection status
-	distortos::ConditionVariable conditionVariable_;
-
-	/// mutex used for access serialization and in conjunction with condition variable
+	/// mutex used for access serialization
 	distortos::Mutex mutex_;
 
 	/// lwIP's network interface
@@ -147,6 +150,9 @@ private:
 
 	/// lwIP's PPP protocol control block
 	ppp_pcb* pcb_;
+
+	/// pointer to semaphore used for notification about change of connection state
+	distortos::Semaphore* semaphore_;
 
 	/// true if connected, false otherwise
 	bool connected_;

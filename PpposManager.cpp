@@ -208,10 +208,17 @@ void PpposManager::pppLinkStatus(const int errorCode)
 
 	{
 		std::lock_guard lockGuard {mutex_};
-		connected_ = errorCode == PPPERR_NONE;
-	}
 
-	conditionVariable_.notifyAll();
+		connected_ = errorCode == PPPERR_NONE;
+
+		if (semaphore_ != nullptr)
+		{
+			auto& semaphore = *semaphore_;
+			semaphore_ = {};
+			const auto ret = semaphore.post();
+			assert(ret == 0);
+		}
+	}
 }
 
 u32_t PpposManager::ppposOutput(u8_t* const buffer, const u32_t size) const
@@ -279,9 +286,16 @@ void PpposManager::threadFunction()
 		ppposPhase();
 
 		{
-			std::lock_guard lockGuard {mutex_};
-			const auto ret = conditionVariable_.wait(mutex_, [this](){ return connected_ == false; });
-			assert(ret == 0);
+			std::unique_lock uniqueLock {mutex_};
+
+			if (connected_ == true)
+			{
+				distortos::Semaphore semaphore {0};
+				semaphore_ = &semaphore;
+				uniqueLock.unlock();
+				const auto ret = semaphore.wait();
+				assert(ret == 0);
+			}
 		}
 	}
 }
