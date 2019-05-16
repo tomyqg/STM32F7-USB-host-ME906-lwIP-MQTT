@@ -9,6 +9,7 @@
 
 add_library(lwIP-integration STATIC
 		${CMAKE_CURRENT_LIST_DIR}/lwipCriticalSection.cpp
+		${CMAKE_CURRENT_LIST_DIR}/lwipErrorToErrorCode.cpp
 		${CMAKE_CURRENT_LIST_DIR}/lwipMailbox.cpp
 		${CMAKE_CURRENT_LIST_DIR}/lwipMiscellaneous.cpp
 		${CMAKE_CURRENT_LIST_DIR}/lwipMutex.cpp
