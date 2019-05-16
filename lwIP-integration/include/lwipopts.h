@@ -22,6 +22,7 @@ extern "C"
 #define LWIP_POSIX_SOCKETS_IO_NAMES				0
 #define MEM_ALIGNMENT							4
 #define MEM_SIZE								(10 * 1024)
+#define MEMP_NUM_SYS_TIMEOUT					(LWIP_NUM_SYS_TIMEOUT_INTERNAL + 1)
 #define NUM_PPP									1
 #define PPPOS_SUPPORT							1
 #define PPP_NOTIFY_PHASE						1
@@ -47,6 +48,7 @@ extern "C"
 #define IP_REASS_DEBUG							LWIP_DBG_OFF
 #define MEMP_DEBUG								LWIP_DBG_OFF
 #define MEM_DEBUG								LWIP_DBG_OFF
+#define MQTT_DEBUG								LWIP_DBG_ON
 #define NETIF_DEBUG								LWIP_DBG_OFF
 #define PBUF_DEBUG								LWIP_DBG_OFF
 #define PPP_DEBUG								LWIP_DBG_ON
