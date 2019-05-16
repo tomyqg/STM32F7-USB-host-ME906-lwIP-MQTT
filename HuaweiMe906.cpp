@@ -58,7 +58,7 @@ int HuaweiMe906::write(const Port port, const void* const buffer, const size_t s
 
 void HuaweiMe906::SerialPort::backgroundProcess(USBH_HandleTypeDef& host)
 {
-	const std::lock_guard<distortos::Mutex> lockGuard {mutex_};
+	const std::lock_guard lockGuard {mutex_};
 
 	if (readSemaphore_ != nullptr)
 	{
@@ -108,7 +108,7 @@ void HuaweiMe906::SerialPort::backgroundProcess(USBH_HandleTypeDef& host)
 
 void HuaweiMe906::SerialPort::interfaceDeinitialize(USBH_HandleTypeDef& host)
 {
-	const std::lock_guard<distortos::Mutex> lockGuard {mutex_};
+	const std::lock_guard lockGuard {mutex_};
 
 	USBH_UsrLog("HuaweiMe906::SerialPort(%p)::interfaceDeinitialize", this);
 
@@ -163,7 +163,7 @@ void HuaweiMe906::SerialPort::interfaceDeinitialize(USBH_HandleTypeDef& host)
 
 USBH_StatusTypeDef HuaweiMe906::SerialPort::interfaceInitialize(USBH_HandleTypeDef& host)
 {
-	const std::lock_guard<distortos::Mutex> lockGuard {mutex_};
+	const std::lock_guard lockGuard {mutex_};
 
 	const auto interface = USBH_FindInterface(&host, 0xff, 0x01, protocol_);
 	if (interface == 0xff)
@@ -230,7 +230,7 @@ USBH_StatusTypeDef HuaweiMe906::SerialPort::interfaceInitialize(USBH_HandleTypeD
 
 std::pair<int, size_t> HuaweiMe906::SerialPort::read(USBH_HandleTypeDef& host, void* const buffer, const size_t size)
 {
-	const std::lock_guard<distortos::Mutex> readLockGuard {readMutex_};
+	const std::lock_guard readLockGuard {readMutex_};
 
 	assert(buffer != nullptr);
 
@@ -240,7 +240,7 @@ std::pair<int, size_t> HuaweiMe906::SerialPort::read(USBH_HandleTypeDef& host, v
 	distortos::Semaphore semaphore {0};
 
 	{
-		const std::lock_guard<distortos::Mutex> lockGuard {mutex_};
+		const std::lock_guard lockGuard {mutex_};
 
 		if (active_ == false)
 			return {ENOTCONN, {}};
@@ -275,12 +275,12 @@ std::pair<int, size_t> HuaweiMe906::SerialPort::read(USBH_HandleTypeDef& host, v
 
 int HuaweiMe906::SerialPort::write(USBH_HandleTypeDef& host, const void* const buffer, const size_t size)
 {
-	const std::lock_guard<distortos::Mutex> writeLockGuard {writeMutex_};
+	const std::lock_guard writeLockGuard {writeMutex_};
 
 	distortos::Semaphore semaphore {0};
 
 	{
-		const std::lock_guard<distortos::Mutex> lockGuard {mutex_};
+		const std::lock_guard lockGuard {mutex_};
 
 		if (active_ == false)
 			return ENOTCONN;
