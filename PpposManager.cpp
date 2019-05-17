@@ -32,7 +32,7 @@
 
 void PpposManager::initialize()
 {
-	std::lock_guard lockGuard {mutex_};
+	const std::lock_guard lockGuard {mutex_};
 
 	assert(pcb_ == nullptr);
 
@@ -207,7 +207,7 @@ void PpposManager::pppLinkStatus(const int errorCode)
 	}
 
 	{
-		std::lock_guard lockGuard {mutex_};
+		const std::lock_guard lockGuard {mutex_};
 
 		connected_ = errorCode == PPPERR_NONE;
 
