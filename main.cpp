@@ -38,7 +38,11 @@
 /// MQTT message published to ONLINE_TOPIC as client's "will" when connection is lost
 #define OFFLINE_MESSAGE	"0"
 
-/// MQTT "online" topic - OFFLINE_MESSAGE is published as client's "will" when connection is lost
+/// MQTT message published to ONLINE_TOPIC when connected to MQTT broker
+#define ONLINE_MESSAGE	"1"
+
+/// MQTT "online" topic - ONLINE_MESSAGE is published when connected to MQTT broker and OFFLINE_MESSAGE as client's
+// "will" when connection is lost
 #define ONLINE_TOPIC	"distortos/" DISTORTOS_VERSION_STRING "/" DISTORTOS_BOARD "/online"
 
 namespace
@@ -87,6 +91,18 @@ void mqttClientConnectionCallback(mqtt_client_t* const client, void* const argum
 
 	mqttClient.status = status;
 	mqttClient.connecting = {};
+}
+
+/**
+ * \brief lwIP's MQTT request callback
+ *
+ * \param [in] argument is a argument which was passed to mqtt_publish(), must be MqttClient!
+ * \param [in] error is the result of MQTT request
+ */
+
+void mqttRequestCallback(void*, const err_t error)
+{
+	fiprintf(standardOutputStream, "mqttRequestCallback: error = %d\r\n", error);
 }
 
 /**
@@ -254,8 +270,26 @@ int main()
 			distortos::ThisThread::sleepFor(std::chrono::seconds{5});
 		}
 
+		bool onlinePublished = {};
 		while (mqttClient.status == MQTT_CONNECT_ACCEPTED)
+		{
+			if (onlinePublished == false)
+			{
+				LOCK_TCPIP_CORE();
+				const auto ret = mqtt_publish(mqttClient.client, ONLINE_TOPIC, ONLINE_MESSAGE, strlen(ONLINE_MESSAGE),
+						{}, {}, mqttRequestCallback, &mqttClient);
+				UNLOCK_TCPIP_CORE();
+				if (ret != ERR_OK)
+				{
+					fiprintf(standardOutputStream, "mqtt_publish() failed, ret = %d\r\n", ret);
+					continue;
+				}
+
+				onlinePublished = true;
+			}
+
 			distortos::ThisThread::sleepFor(std::chrono::seconds{5});
+		}
 
 		LOCK_TCPIP_CORE();
 		mqtt_disconnect(mqttClient.client);
