@@ -1,4 +1,4 @@
-STM32F7-USB-host-ME906-lwIP-MQTT
+STM32F7-USB-host-ME906-lwIP-MQTT [![Build Status](https://travis-ci.org/DISTORTEC/STM32F7-USB-host-ME906-lwIP-MQTT.svg)](https://travis-ci.org/DISTORTEC/STM32F7-USB-host-ME906-lwIP-MQTT)
 ================================
 
 MQTT demo project for [32F746GDISCOVERY](http://www.st.com/en/evaluation-tools/32f746gdiscovery.html) board, also known
