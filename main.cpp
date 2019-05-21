@@ -21,19 +21,73 @@
 
 #include "distortos/board/initializeStreams.hpp"
 
+#include "distortos/distortosVersion.h"
 #include "distortos/DynamicThread.hpp"
 #include "distortos/ThisThread.hpp"
+
+#include "lwip/apps/mqtt.h"
 
 #include "lwip/tcpip.h"
 
 #include <cstring>
 
+/*---------------------------------------------------------------------------------------------------------------------+
+| local defines
++---------------------------------------------------------------------------------------------------------------------*/
+
+/// MQTT message published to ONLINE_TOPIC as client's "will" when connection is lost
+#define OFFLINE_MESSAGE	"0"
+
+/// MQTT "online" topic - OFFLINE_MESSAGE is published as client's "will" when connection is lost
+#define ONLINE_TOPIC	"distortos/" DISTORTOS_VERSION_STRING "/" DISTORTOS_BOARD "/online"
+
 namespace
 {
 
 /*---------------------------------------------------------------------------------------------------------------------+
+| local types
++---------------------------------------------------------------------------------------------------------------------*/
+
+/// collection of data used by lwIP's MQTT client
+struct MqttClient
+{
+	/// MQTT client connection info
+	mqtt_connect_client_info_t connectionInfo;
+
+	/// pointer to lwIP's MQTT client struct
+	mqtt_client_t* client;
+
+	/// MQTT client's status
+	mqtt_connection_status_t status;
+
+	/// true if connecting is in progress, false otherwise
+	bool connecting;
+};
+
+/*---------------------------------------------------------------------------------------------------------------------+
 | local functions
 +---------------------------------------------------------------------------------------------------------------------*/
+
+/**
+ * \brief lwIP's MQTT connection callback
+ *
+ * \param [in] client is a pointer to lwIP's MQTT client struct
+ * \param [in] argument is a argument which was passed to mqtt_client_connect(), must be MqttClient!
+ * \param [in] status is the status of MQTT connection
+ */
+
+void mqttClientConnectionCallback(mqtt_client_t* const client, void* const argument,
+		const mqtt_connection_status_t status)
+{
+	assert(argument != nullptr);
+	auto& mqttClient = *static_cast<MqttClient*>(argument);
+	assert(client == mqttClient.client);
+
+	fiprintf(standardOutputStream, "mqttClientConnectionCallback: status = %d\r\n", status);
+
+	mqttClient.status = status;
+	mqttClient.connecting = {};
+}
 
 /**
  * \brief Thread which constantly reads selected HuaweiMe906 serial port and prints data that was read on
@@ -155,14 +209,57 @@ int main()
 	PpposManager ppposManager {huaweiMe906};
 	ppposManager.initialize();
 
+	MqttClient mqttClient {};
+
+	LOCK_TCPIP_CORE();
+	mqttClient.client = mqtt_client_new();
+	assert(mqttClient.client != nullptr);
+	UNLOCK_TCPIP_CORE();
+
+	mqttClient.connectionInfo.client_id = "MQTT client";
+	mqttClient.connectionInfo.client_user = {};
+	mqttClient.connectionInfo.client_pass = {};
+	mqttClient.connectionInfo.keep_alive = 60;
+	mqttClient.connectionInfo.will_topic = ONLINE_TOPIC;
+	mqttClient.connectionInfo.will_msg = OFFLINE_MESSAGE;
+	mqttClient.connectionInfo.will_qos = {};
+	mqttClient.connectionInfo.will_retain = {};
+#if LWIP_ALTCP && LWIP_ALTCP_TLS
+	mqttClient.connectionInfo.tls_config = {};
+#endif
+
+	// broker.hivemq.com -> 18.184.104.180
+	const ip_addr_t ip = IPADDR4_INIT_BYTES(18, 184, 104, 180);
+
 	while (1)
 	{
-#if USBH_USE_OS == 0
-		USBH_Process(&usbHost);
-		distortos::ThisThread::sleepFor(distortos::TickClock::duration{});
-#else
-		distortos::ThisThread::sleepFor(std::chrono::seconds{1});
-#endif
+		mqttClient.connecting = true;
+
+		{
+			LOCK_TCPIP_CORE();
+			const auto ret = mqtt_client_connect(mqttClient.client, &ip, MQTT_PORT, mqttClientConnectionCallback,
+					&mqttClient, &mqttClient.connectionInfo);
+			UNLOCK_TCPIP_CORE();
+			if (ret != ERR_OK)
+			{
+				fiprintf(standardOutputStream, "mqtt_client_connect() failed, ret = %d\r\n", ret);
+				distortos::ThisThread::sleepFor(std::chrono::seconds{5});
+				continue;
+			}
+		}
+
+		while (mqttClient.connecting == true)
+		{
+			fiprintf(standardOutputStream, "Connecting to MQTT broker...\r\n");
+			distortos::ThisThread::sleepFor(std::chrono::seconds{5});
+		}
+
+		while (mqttClient.status == MQTT_CONNECT_ACCEPTED)
+			distortos::ThisThread::sleepFor(std::chrono::seconds{5});
+
+		LOCK_TCPIP_CORE();
+		mqtt_disconnect(mqttClient.client);
+		UNLOCK_TCPIP_CORE();
 	}
 }
 
