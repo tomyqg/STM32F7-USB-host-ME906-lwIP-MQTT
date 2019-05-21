@@ -19,7 +19,10 @@
 
 #include "usbh_core.h"
 
+#include "distortos/board/buttons.hpp"
 #include "distortos/board/initializeStreams.hpp"
+
+#include "distortos/chip/ChipInputPin.hpp"
 
 #include "distortos/distortosVersion.h"
 #include "distortos/DynamicThread.hpp"
@@ -35,6 +38,9 @@
 | local defines
 +---------------------------------------------------------------------------------------------------------------------*/
 
+/// common prefix of all topics used by this application
+#define TOPIC_PREFIX	"distortos/" DISTORTOS_VERSION_STRING "/" DISTORTOS_BOARD
+
 /// MQTT message published to ONLINE_TOPIC as client's "will" when connection is lost
 #define OFFLINE_MESSAGE	"0"
 
@@ -43,7 +49,13 @@
 
 /// MQTT "online" topic - ONLINE_MESSAGE is published when connected to MQTT broker and OFFLINE_MESSAGE as client's
 // "will" when connection is lost
-#define ONLINE_TOPIC	"distortos/" DISTORTOS_VERSION_STRING "/" DISTORTOS_BOARD "/online"
+#define ONLINE_TOPIC	TOPIC_PREFIX "/online"
+
+/// prefix for topic used for publishing state of buttons
+#define BUTTONS_TOPIC_PREFIX	TOPIC_PREFIX "/buttons"
+
+/// suffix for topic used for publishing state of buttons
+#define BUTTONS_TOPIC_SUFFIX	"/state"
 
 namespace
 {
@@ -271,6 +283,8 @@ int main()
 		}
 
 		bool onlinePublished = {};
+		bool buttonStates[DISTORTOS_BOARD_BUTTONS_COUNT] {};
+		bool buttonsPublished = {};
 		while (mqttClient.status == MQTT_CONNECT_ACCEPTED)
 		{
 			if (onlinePublished == false)
@@ -288,7 +302,41 @@ int main()
 				onlinePublished = true;
 			}
 
-			distortos::ThisThread::sleepFor(std::chrono::seconds{5});
+			bool publishFailed = {};
+			for (size_t i {}; i < std::size(distortos::board::buttons) && publishFailed == false; ++i)
+			{
+				const auto state = distortos::board::buttons[i].get();
+				if (buttonStates[i] != state || buttonsPublished == false)
+				{
+					static_assert(std::size(distortos::board::buttons) < 10);
+					char topic[std::size(BUTTONS_TOPIC_PREFIX "/?" BUTTONS_TOPIC_SUFFIX)];
+					{
+						const auto ret = sniprintf(topic, std::size(topic),
+								BUTTONS_TOPIC_PREFIX "/%zu" BUTTONS_TOPIC_SUFFIX, i);
+						assert(ret > 0 && static_cast<size_t>(ret) < std::size(topic));
+					}
+					const auto message = state == false ? '0' : '1';
+					LOCK_TCPIP_CORE();
+					const auto ret = mqtt_publish(mqttClient.client, topic, &message, 1, {}, {}, mqttRequestCallback,
+							&mqttClient);
+					UNLOCK_TCPIP_CORE();
+					if (ret != ERR_OK)
+					{
+						fiprintf(standardOutputStream, "mqtt_publish() failed, ret = %d\r\n", ret);
+						publishFailed = true;
+						continue;
+					}
+
+					buttonStates[i] = state;
+				}
+			}
+
+			if (publishFailed == true)
+				continue;
+
+			buttonsPublished = true;
+
+			distortos::ThisThread::sleepFor(std::chrono::milliseconds{50});
 		}
 
 		LOCK_TCPIP_CORE();
