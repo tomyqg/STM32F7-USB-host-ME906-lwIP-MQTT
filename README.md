@@ -21,7 +21,7 @@ For more in-depth instructions see `distortos/README.md`.
 MQTT
 ----
 
-Once the modem connects to the network, it tries to connect to MQTT broker at broker.hivemq.com. When you subscribe to
+Once the modem connects to the network, it tries to connect to MQTT broker at `broker.hivemq.com`. When you subscribe to
 the topic `distortos/#`, you should see the messages with device's online status (`1` is sent when the device connects,
 `0` as a MQTT client's will once the connection is lost) and changes of button state:
 
@@ -83,13 +83,13 @@ parameters: 115200 bps, 8N1. Below you will find the example of the produced out
 [2019-05-21 16:34:00] Device remote wakeup enabled
 [2019-05-21 16:34:00] HuaweiMe906::SerialPort(0x2004faf0)::interfaceInitialize: interface 0,
                       read endpoint address 0x81, read endpoint size 64, read pipe 2,
-					  write endpoint address 0x1, write endpoint size 64, write pipe 3
+                      write endpoint address 0x1, write endpoint size 64, write pipe 3
 [2019-05-21 16:34:00] HuaweiMe906::SerialPort(0x2004fb5c)::interfaceInitialize: interface 2,
                       read endpoint address 0x83, read endpoint size 64, read pipe 4,
-					  write endpoint address 0x3, write endpoint size 64, write pipe 5
+                      write endpoint address 0x3, write endpoint size 64, write pipe 5
 [2019-05-21 16:34:00] HuaweiMe906::SerialPort(0x2004fbc8)::interfaceInitialize: interface 5,
                       read endpoint address 0x89, read endpoint size 64, read pipe 6,
-					  write endpoint address 0x6, write endpoint size 64, write pipe 7
+                      write endpoint address 0x6, write endpoint size 64, write pipe 7
 [2019-05-21 16:34:00] Huawei ME906 class started.
 [2019-05-21 16:34:00] usbHostEventCallback: HOST_USER_CLASS_SELECTED
 [2019-05-21 16:34:00] usbHostEventCallback: HOST_USER_CLASS_ACTIVE
