@@ -13,7 +13,7 @@ Configuration & building
 
     $ mkdir output
     $ cd output
-    $ cmake -C../distortosConfiguration.cmake .. -GNinja
+    $ cmake -C../configurations/ST_32F746GDISCOVERY/distortosConfiguration.cmake .. -GNinja
     $ ninja
 
 For more in-depth instructions see `distortos/README.md`.

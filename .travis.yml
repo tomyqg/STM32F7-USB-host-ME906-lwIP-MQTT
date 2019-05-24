@@ -27,4 +27,4 @@ install:
     - "./distortos/scripts/travis-ci.sh install ${SUBSTAGE}"
 
 script:
-    - "./distortos/scripts/travis-ci.sh script ${SUBSTAGE} distortosConfiguration.cmake"
+    - "./distortos/scripts/travis-ci.sh script ${SUBSTAGE} configurations"
