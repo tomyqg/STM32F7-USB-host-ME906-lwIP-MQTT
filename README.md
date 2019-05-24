@@ -1,8 +1,9 @@
 STM32F7-USB-host-ME906-lwIP-MQTT [![Build Status](https://travis-ci.org/DISTORTEC/STM32F7-USB-host-ME906-lwIP-MQTT.svg)](https://travis-ci.org/DISTORTEC/STM32F7-USB-host-ME906-lwIP-MQTT)
 ================================
 
-MQTT demo project for [32F746GDISCOVERY](http://www.st.com/en/evaluation-tools/32f746gdiscovery.html) board, also known
-as *STM32F746G-DISCO*. It features following components:
+MQTT demo project for [32F746GDISCOVERY](http://www.st.com/en/evaluation-tools/32f746gdiscovery.html) (also known as
+*STM32F746G-DISCO*) and [NUCLEO-F767ZI](https://www.st.com/en/evaluation-tools/nucleo-f767zi.html) boards. It features
+following components:
 - *distortos*,
 - *ST's* *STM32F7 HAL* and *USB host* libraries, with numerous fixes to make them actually usable,
 - USB class driver for *Huawei ME906* modem,
@@ -11,9 +12,18 @@ as *STM32F746G-DISCO*. It features following components:
 Configuration & building
 ------------------------
 
+When you want to use *32F746GDISCOVERY* board:
+
     $ mkdir output
     $ cd output
     $ cmake -C../configurations/ST_32F746GDISCOVERY/distortosConfiguration.cmake .. -GNinja
+    $ ninja
+
+When you want to use *NUCLEO-F767ZI* board:
+
+    $ mkdir output
+    $ cd output
+    $ cmake -C../configurations/ST_NUCLEO-F767ZI/distortosConfiguration.cmake .. -GNinja
     $ ninja
 
 For more in-depth instructions see `distortos/README.md`.
@@ -23,7 +33,9 @@ MQTT
 
 Once the modem connects to the network, it tries to connect to MQTT broker at `broker.hivemq.com`. When you subscribe to
 the topic `distortos/#`, you should see the messages with device's online status (`1` is sent when the device connects,
-`0` as a MQTT client's will once the connection is lost) and changes of button state:
+`0` as a MQTT client's will once the connection is lost) and changes of button state.
+
+With *32F746GDISCOVERY* board:
 
 ```
 $ mosquitto_sub -h broker.hivemq.com -t "distortos/#" -v
@@ -33,7 +45,19 @@ distortos/0.7.0/ST,32F746GDISCOVERY/buttons/0/state 1
 distortos/0.7.0/ST,32F746GDISCOVERY/buttons/0/state 0
 ```
 
-The application also allows you to control on-board LEDs via MQTT:
+With *NUCLEO-F767ZI* board:
+
+```
+$ mosquitto_sub -h broker.hivemq.com -t "distortos/#" -v
+distortos/0.7.0/ST,NUCLEO-F767ZI/online 1
+distortos/0.7.0/ST,NUCLEO-F767ZI/buttons/0/state 0
+distortos/0.7.0/ST,NUCLEO-F767ZI/buttons/0/state 1
+distortos/0.7.0/ST,NUCLEO-F767ZI/buttons/0/state 0
+```
+
+The application also allows you to control on-board LEDs via MQTT.
+
+*32F746GDISCOVERY* board has just one LED available:
 
 ```
 # set the LED on
@@ -42,11 +66,28 @@ $ mosquitto_pub -h broker.hivemq.com -t "distortos/0.7.0/ST,32F746GDISCOVERY/led
 $ mosquitto_pub -h broker.hivemq.com -t "distortos/0.7.0/ST,32F746GDISCOVERY/leds/0/state" -m "0"
 ```
 
+On *NUCLEO-F767ZI* board there are 3 LEDs:
+
+```
+# set green LED on
+$ mosquitto_pub -h broker.hivemq.com -t "distortos/0.7.0/ST,NUCLEO-F767ZI/leds/0/state" -m "1"
+# set blue LED on
+$ mosquitto_pub -h broker.hivemq.com -t "distortos/0.7.0/ST,NUCLEO-F767ZI/leds/1/state" -m "1"
+# set red LED on
+$ mosquitto_pub -h broker.hivemq.com -t "distortos/0.7.0/ST,NUCLEO-F767ZI/leds/2/state" -m "1"
+# set green LED off
+$ mosquitto_pub -h broker.hivemq.com -t "distortos/0.7.0/ST,NUCLEO-F767ZI/leds/0/state" -m "0"
+# set blue LED off
+$ mosquitto_pub -h broker.hivemq.com -t "distortos/0.7.0/ST,NUCLEO-F767ZI/leds/1/state" -m "0"
+# set red LED off
+$ mosquitto_pub -h broker.hivemq.com -t "distortos/0.7.0/ST,NUCLEO-F767ZI/leds/2/state" -m "0"
+```
+
 Debug output
 ------------
 
 ST-Link V2-1 has a virtual COM port which is used for debug output from the application. The stream uses typical
-parameters: 115200 bps, 8N1. Below you will find the example of the produced output.
+parameters: 115200 bps, 8N1. Below you will find the example of the output from *32F746GDISCOVERY* board.
 
 ```
 [2019-05-21 16:33:47] Started ST,32F746GDISCOVERY board
