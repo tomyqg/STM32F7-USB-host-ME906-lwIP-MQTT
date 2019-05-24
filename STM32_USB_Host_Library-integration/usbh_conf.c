@@ -70,8 +70,6 @@ void HAL_HCD_MspInit(HCD_HandleTypeDef *hhcd)
   if(hhcd->Instance == USB_OTG_FS)
   {
     /* Configure USB FS GPIOs */
-    __HAL_RCC_GPIOA_CLK_ENABLE();
-    __HAL_RCC_GPIOD_CLK_ENABLE();
 
     GPIO_InitStruct.Pin = (GPIO_PIN_11 | GPIO_PIN_12);
     GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
@@ -101,10 +99,6 @@ void HAL_HCD_MspInit(HCD_HandleTypeDef *hhcd)
   else if(hhcd->Instance == USB_OTG_HS)
   {
     /* Configure USB HS GPIOs */
-    __HAL_RCC_GPIOA_CLK_ENABLE();
-    __HAL_RCC_GPIOB_CLK_ENABLE();
-    __HAL_RCC_GPIOC_CLK_ENABLE();
-    __HAL_RCC_GPIOH_CLK_ENABLE();
 
     /* CLK */
     GPIO_InitStruct.Pin = GPIO_PIN_5;
