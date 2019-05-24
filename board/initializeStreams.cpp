@@ -42,10 +42,19 @@ namespace
 /// array with initializers for pins with alternate function
 const AlternateFunctionPinInitializer alternateFunctionPinInitializers[]
 {
+#if defined(DISTORTOS_BOARD_ST_32F746GDISCOVERY)
 		// USART1_TX
 		{chip::Pin::pa9, chip::PinAlternateFunction::af7, false, chip::PinOutputSpeed::veryHigh, chip::PinPull::up},
 		// USART1_RX
 		{chip::Pin::pb7, chip::PinAlternateFunction::af7, false, chip::PinOutputSpeed::veryHigh, chip::PinPull::up},
+#elif defined(DISTORTOS_BOARD_ST_NUCLEO_F767ZI)
+		// USART3_TX
+		{chip::Pin::pd8, chip::PinAlternateFunction::af7, false, chip::PinOutputSpeed::veryHigh, chip::PinPull::up},
+		// USART3_RX
+		{chip::Pin::pd9, chip::PinAlternateFunction::af7, false, chip::PinOutputSpeed::veryHigh, chip::PinPull::up},
+#else
+#error "Unsupported board!"
+#endif
 };
 
 /// read buffer for \a serialPort
@@ -55,8 +64,17 @@ uint8_t serialPortReadBuffer[256];
 uint8_t serialPortWriteBuffer[256];
 
 /// serial port instance
-devices::SerialPort serialPort {chip::usart1, serialPortReadBuffer, sizeof(serialPortReadBuffer), serialPortWriteBuffer,
-		sizeof(serialPortWriteBuffer)};
+devices::SerialPort serialPort
+{
+#if defined(DISTORTOS_BOARD_ST_32F746GDISCOVERY)
+		chip::usart1,
+#elif defined(DISTORTOS_BOARD_ST_NUCLEO_F767ZI)
+		chip::usart3,
+#else
+#error "Unsupported board!"
+#endif
+		serialPortReadBuffer, sizeof(serialPortReadBuffer), serialPortWriteBuffer, sizeof(serialPortWriteBuffer)
+};
 
 /// buffer for \a standardOutputStream
 char standardOutputStreamBuffer[256];

@@ -47,6 +47,24 @@
 #include "stm32f7xx_hal.h"
 #include "usbh_core.h"
 
+#if defined(DISTORTOS_BOARD_ST_32F746GDISCOVERY)
+
+#define POWER_SWITCH_GPIO           GPIOD
+#define POWER_SWITCH_PIN            GPIO_PIN_5
+#define POWER_SWITCH_ACTIVE_STATE   0
+
+#elif defined(DISTORTOS_BOARD_ST_NUCLEO_F767ZI)
+
+#define POWER_SWITCH_GPIO           GPIOG
+#define POWER_SWITCH_PIN            GPIO_PIN_6
+#define POWER_SWITCH_ACTIVE_STATE   1
+
+#else
+
+#error "Unsupported board!"
+
+#endif
+
 HCD_HandleTypeDef hhcd;
 
 #if USBH_USE_OS == 1
@@ -85,10 +103,10 @@ void HAL_HCD_MspInit(HCD_HandleTypeDef *hhcd)
     HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
     /* Configure POWER_SWITCH IO pin */
-    GPIO_InitStruct.Pin = GPIO_PIN_5;
+    GPIO_InitStruct.Pin = POWER_SWITCH_PIN;
     GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
-    HAL_GPIO_Init(GPIOD, &GPIO_InitStruct); 
+    HAL_GPIO_Init(POWER_SWITCH_GPIO, &GPIO_InitStruct);
     
     /* Enable USB FS Clocks */ 
     __HAL_RCC_USB_OTG_FS_CLK_ENABLE();
@@ -517,13 +535,13 @@ USBH_URBStateTypeDef USBH_LL_GetURBState(USBH_HandleTypeDef *phost, uint8_t pipe
 USBH_StatusTypeDef USBH_LL_DriverVBUS(USBH_HandleTypeDef *phost, uint8_t state)
 {
 #ifdef USE_USB_FS
-  if(state == 0)
+  if(state == POWER_SWITCH_ACTIVE_STATE)
   {
-    HAL_GPIO_WritePin(GPIOD, GPIO_PIN_5, GPIO_PIN_SET);
+    HAL_GPIO_WritePin(POWER_SWITCH_GPIO, POWER_SWITCH_PIN, GPIO_PIN_SET);
   }
   else
   {
-    HAL_GPIO_WritePin(GPIOD, GPIO_PIN_5, GPIO_PIN_RESET);
+    HAL_GPIO_WritePin(POWER_SWITCH_GPIO, POWER_SWITCH_PIN, GPIO_PIN_RESET);
   }
 
   HAL_Delay(200);
