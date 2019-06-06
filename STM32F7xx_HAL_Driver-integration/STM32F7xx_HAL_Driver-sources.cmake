@@ -9,11 +9,7 @@
 
 add_library(STM32F7xx_HAL_Driver-integration STATIC
 		${CMAKE_CURRENT_LIST_DIR}/HAL_Delay.cpp)
-target_include_directories(STM32F7xx_HAL_Driver-integration PUBLIC
-		${CMAKE_CURRENT_LIST_DIR}/include
-		$<TARGET_PROPERTY:STM32F7xx_HAL_Driver,INTERFACE_INCLUDE_DIRECTORIES>)
 target_link_libraries(STM32F7xx_HAL_Driver-integration PUBLIC
-		distortos::distortos)
+		STM32F7xx_HAL_Driver)
 
-target_link_libraries(STM32F7xx_HAL_Driver PUBLIC
-		STM32F7xx_HAL_Driver-integration)
+add_library(STM32F7xx_HAL_Driver::STM32F7xx_HAL_Driver ALIAS STM32F7xx_HAL_Driver-integration)

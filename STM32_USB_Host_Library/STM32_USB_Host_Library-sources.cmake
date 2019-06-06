@@ -20,4 +20,4 @@ target_include_directories(STM32_USB_Host_Library PUBLIC
 		${CMAKE_CURRENT_LIST_DIR}/Core/Inc)
 target_link_libraries(STM32_USB_Host_Library PUBLIC
 		CMSIS-RTOS2
-		STM32F7xx_HAL_Driver)
+		STM32F7xx_HAL_Driver::STM32F7xx_HAL_Driver)

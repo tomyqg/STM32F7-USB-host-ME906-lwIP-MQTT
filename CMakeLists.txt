@@ -24,6 +24,8 @@ target_include_directories(distortos INTERFACE
 
 include(${CMAKE_CURRENT_LIST_DIR}/STM32F7xx_HAL_Driver/STM32F7xx_HAL_Driver-sources.cmake)
 include(${CMAKE_CURRENT_LIST_DIR}/STM32F7xx_HAL_Driver-integration/STM32F7xx_HAL_Driver-sources.cmake)
+target_include_directories(STM32F7xx_HAL_Driver PUBLIC
+		${CMAKE_CURRENT_LIST_DIR})
 
 #-----------------------------------------------------------------------------------------------------------------------
 # CMSIS-RTOS2 library
