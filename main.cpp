@@ -32,6 +32,7 @@
 
 #include "lwip/apps/mqtt.h"
 
+#include "lwip/netdb.h"
 #include "lwip/tcpip.h"
 
 #include <cstring>
@@ -327,6 +328,25 @@ int main()
 	PpposManager ppposManager {huaweiMe906};
 	ppposManager.initialize();
 
+	ip_addr_t ip;
+	{
+		int ret;
+		struct addrinfo* addressInformation;
+		while (ret = getaddrinfo("broker.hivemq.com", nullptr, nullptr, &addressInformation), ret != 0)
+		{
+			fiprintf(standardOutputStream, "getaddrinfo() failed, ret = %d\r\n", ret);
+			distortos::ThisThread::sleepFor(std::chrono::seconds{5});
+		}
+
+		assert(addressInformation != nullptr && addressInformation->ai_family == AF_INET);
+		assert(addressInformation->ai_addr != nullptr && addressInformation->ai_addr->sa_family == AF_INET);
+		const auto internetAddress = reinterpret_cast<const sockaddr_in*>(addressInformation->ai_addr);
+		inet_addr_to_ip4addr(&ip, &internetAddress->sin_addr);
+		fiprintf(standardOutputStream, "%s is %s\r\n", addressInformation->ai_canonname, ip4addr_ntoa(&ip));
+
+		freeaddrinfo(addressInformation);
+	}
+
 	MqttClient mqttClient {};
 
 	LOCK_TCPIP_CORE();
@@ -345,9 +365,6 @@ int main()
 #if LWIP_ALTCP && LWIP_ALTCP_TLS
 	mqttClient.connectionInfo.tls_config = {};
 #endif
-
-	// broker.hivemq.com -> 18.184.104.180
-	const ip_addr_t ip = IPADDR4_INIT_BYTES(18, 184, 104, 180);
 
 	while (1)
 	{
