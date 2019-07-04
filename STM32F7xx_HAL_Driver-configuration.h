@@ -12,6 +12,11 @@
 #ifndef STM32F7XX_HAL_DRIVER_CONFIGURATION_H_
 #define STM32F7XX_HAL_DRIVER_CONFIGURATION_H_
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif	/* def __cplusplus */
+
 /*---------------------------------------------------------------------------------------------------------------------+
 | clock-related global defines
 +---------------------------------------------------------------------------------------------------------------------*/
@@ -27,5 +32,9 @@
 
 /** time out for LSE start up, milliseconds */
 #define LSE_STARTUP_TIMEOUT					5000
+
+#ifdef __cplusplus
+}	/* extern "C" */
+#endif	/* def __cplusplus */
 
 #endif	/* STM32F7XX_HAL_DRIVER_CONFIGURATION_H_ */
